@@ -42,7 +42,7 @@ jobs:
           docker restart luxir
           for i in $(seq 1 30); do curl -fsS localhost:9400/health && break; sleep 1; done
           curl -fsS -XPOST localhost:9400/collections/smoke/_search -d '{"query":{"all":true},"get_number":true}' | grep '"found":2'
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: ghcr.io/${{ github.repository_owner }}/luxir
