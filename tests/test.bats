@@ -36,7 +36,8 @@ health_check() {
   health_check
 
   ddev exec "curl -fsS -XPOST http://luxir:9400/collections/_create -d '{\"name\":\"demo\",\"schema\":{\"fields\":{\"title_t\":{\"type\":\"text\",\"analyzer\":{\"tokenizer\":\"unicode_word\",\"filters\":[\"nfkc_cf\"]}}}}}'"
-  run ddev luxir POST /collections/demo/_update @"${DIR}/tests/testdata/books.ndjson"
+  cp "${DIR}/tests/testdata/books.ndjson" "${TESTDIR}/books.ndjson"
+  run ddev luxir POST /collections/demo/_update @books.ndjson
   [[ "$output" == *'"status": "ok"'* ]]
   run ddev luxir /collections/demo/_search '{"query":"title_t:dune","get_number":true}'
   [[ "$output" == *'"found": 2'* ]]
@@ -55,6 +56,7 @@ health_check() {
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
+  [ -n "${RELEASE_TEST:-}" ] || skip "no release yet; set RELEASE_TEST=1"
   cd "${TESTDIR}"
   ddev add-on get "${GITHUB_REPO}"
   ddev restart
