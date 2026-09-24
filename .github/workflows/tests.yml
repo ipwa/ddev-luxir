@@ -1,0 +1,26 @@
+name: tests
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '25 08 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck luxir/*.sh commands/*/*
+      - uses: ddev/github-action-add-on-test@v2
+        with:
+          ddev_version: stable
+          token: ${{ secrets.GITHUB_TOKEN }}
+          debug_enabled: false
+          addon_repository: ${{ github.repository }}
+          addon_ref: ${{ github.ref_name }}

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+## #ddev-generated
+## Description: Show Luxir version, CPU tier, collections and stats
+## Usage: luxir-status
+## Example: ddev luxir-status
+
+set -euo pipefail
+
+echo "== Version / tier =="
+ddev exec -s luxir /usr/local/bin/luxir-entrypoint.sh luxir --version 2>/dev/null | tail -n1 || echo "unavailable (is the luxir service running?)"
+echo
+echo "== Health =="
+ddev exec curl -fsS http://luxir:9400/health || true
+echo
+echo "== Collections =="
+ddev exec curl -fsS 'http://luxir:9400/collections?pretty' || true
+echo
+echo "== Stats (totals) =="
+ddev exec 'curl -fsS http://luxir:9400/_stats | tr -d "\n " | grep -o "\"totals\":{[^}]*}" | head -n1' || true

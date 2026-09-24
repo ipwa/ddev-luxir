@@ -1,0 +1,4 @@
+ddev-luxir
+Unofficial DDEV add-on and container image for Luxir (https://luxir.org).
+The image redistributes unmodified Luxir release binaries, Copyright the Luxir authors,
+licensed under the Apache License 2.0 (https://github.com/luxir-search/luxir).

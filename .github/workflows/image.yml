@@ -1,0 +1,61 @@
+name: image
+# Publishes the unofficial Luxir image used by CI systems (e.g. drupal.org GitLab).
+on:
+  push:
+    branches: [main]
+    paths: ['luxir/**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read Luxir version
+        id: v
+        run: echo "version=$(sed -n 's/^ARG LUXIR_VERSION=//p' luxir/Dockerfile)" >> "$GITHUB_OUTPUT"
+      - name: Build (local) for smoke test
+        uses: docker/build-push-action@v6
+        with:
+          context: luxir
+          platforms: linux/amd64
+          load: true
+          tags: luxir-smoke
+      - name: Smoke test
+        run: |
+          docker run -d --name luxir -p 9400:9400 luxir-smoke
+          for i in $(seq 1 30); do curl -fsS localhost:9400/health && break; sleep 1; done
+          curl -fsS -XPOST localhost:9400/collections/_create -d '{"name":"smoke"}'
+          curl -fsS -XPOST localhost:9400/collections/smoke/_update -d '{"docs":[{"id":"1"},{"id":"2"}],"commit":{}}'
+          curl -fsS -XPOST localhost:9400/collections/smoke/_search -d '{"query":{"all":true},"get_number":true}' | grep '"found":2'
+          docker restart luxir
+          for i in $(seq 1 30); do curl -fsS localhost:9400/health && break; sleep 1; done
+          curl -fsS -XPOST localhost:9400/collections/smoke/_search -d '{"query":{"all":true},"get_number":true}' | grep '"found":2'
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/luxir
+          flavor: latest=false
+          tags: |
+            type=raw,value=${{ steps.v.outputs.version }}
+            type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: luxir
+          platforms: linux/amd64
+          push: true
+          provenance: true
+          sbom: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

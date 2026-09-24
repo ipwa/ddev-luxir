@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+## #ddev-generated
+## Description: Call the Luxir HTTP API (runs in the web container; @file paths are relative to the current directory)
+## Usage: luxir [METHOD] PATH [JSON_BODY|@file]
+## Example: ddev luxir /collections
+## Example: ddev luxir POST /collections/demo/_update @tests/data.ndjson
+## Example: ddev luxir /collections/demo/_search '{"query":"title_t:dune"}'
+## ExecRaw: true
+
+set -euo pipefail
+
+base="${LUXIR_URL:-http://luxir:9400}"
+method=""
+case "${1:-}" in
+  GET|POST|PUT|DELETE|HEAD) method="$1"; shift ;;
+esac
+path="${1:-}"
+if [ -z "$path" ]; then
+  echo "Usage: ddev luxir [METHOD] PATH [JSON_BODY|@file]" >&2
+  exit 1
+fi
+shift || true
+body="${1:-}"
+
+[ -n "$method" ] || { if [ -n "$body" ]; then method=POST; else method=GET; fi; }
+
+case "$path" in
+  /*) ;;
+  *) path="/$path" ;;
+esac
+case "$path" in
+  *\?*) ;;
+  *) path="$path?pretty" ;;
+esac
+
+ctype="application/json"
+args=(-sS -X "$method" -H "Accept: application/json")
+if [ -n "$body" ]; then
+  if [ "${body#@}" != "$body" ]; then
+    file="${body#@}"
+    case "$file" in *.ndjson) ctype="application/x-ndjson" ;; esac
+    args+=(-H "Content-Type: $ctype" --data-binary "@$file")
+  else
+    args+=(-H "Content-Type: $ctype" --data-binary "$body")
+  fi
+fi
+
+curl "${args[@]}" "$base$path"
+echo

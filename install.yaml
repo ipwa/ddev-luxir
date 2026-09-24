@@ -1,0 +1,27 @@
+name: luxir
+
+project_files:
+  - docker-compose.luxir.yaml
+  - luxir/Dockerfile
+  - luxir/luxir-entrypoint.sh
+  - commands/web/luxir
+  - commands/host/luxir-status
+
+ddev_version_constraint: '>= v1.24.3'
+
+post_install_actions:
+  - |
+    #ddev-nodisplay
+    #ddev-description:Show Luxir usage
+    cat <<'MSG'
+    Luxir is available inside the project network at http://luxir:9400
+    (use host "luxir", port 9400, scheme "http" in Search API; not localhost).
+    Try: ddev luxir /collections   and   ddev luxir-status
+    WARNING: Luxir has no authentication or TLS. Do not expose it publicly.
+    MSG
+
+removal_actions:
+  - |
+    #ddev-nodisplay
+    #ddev-description:Note about the Luxir data volume
+    echo "The Luxir data volume was kept. Delete it with: ddev stop --remove-data (or docker volume rm ddev-${DDEV_SITENAME}_luxir)"
