@@ -26,7 +26,7 @@ jobs:
         id: v
         run: echo "version=$(sed -n 's/^ARG LUXIR_VERSION=//p' luxir/Dockerfile)" >> "$GITHUB_OUTPUT"
       - name: Build (local) for smoke test
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: luxir
           platforms: linux/amd64
@@ -50,7 +50,7 @@ jobs:
           tags: |
             type=raw,value=${{ steps.v.outputs.version }}
             type=sha
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: luxir
           platforms: linux/amd64
