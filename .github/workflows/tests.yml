@@ -23,4 +23,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           debug_enabled: false
           addon_repository: ${{ github.repository }}
-          addon_ref: ${{ github.ref_name }}
+          addon_ref: ${{ github.head_ref || github.ref_name }}
